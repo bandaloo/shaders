@@ -6,6 +6,8 @@ uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
 
+const float pi = 3.14159265;
+
 vec3 blurry_rectangle(vec2 p, float xEdgeWidth, float yEdgeWidth, float xBlurriness, float yBlurriness, float xOffset, float yOffset) {
   // the blurry rectangle mask
   p -= vec2(xOffset, yOffset);
@@ -34,14 +36,19 @@ float glow(vec2 p) {
   return clamp(glowColor, 0.0, 1.0);
 }
 
+float sinSpeeding(float position, float offset) {
+  float speed = 100.0 * smoothstep(3.0, 100.0, position);
+  return sin(0.01 * position * speed + offset);
+}
+
 void main() {
   // position on screen
   vec2 p = gl_FragCoord.xy / u_resolution.xy;
   
   // rectangle masks
-  vec3 mask2 = blurry_rectangle(p, 0.4, 0.125, 0.02, 0.02, 0.3, 0.0);
-  vec3 mask3 = blurry_rectangle(p, 0.4, 0.125, 0.02, 0.02, - 0.3, 0.0);
-  vec3 mask1 = blurry_rectangle(p, 0.4, 0.125, 0.02, 0.02, 0.0, 0.0);
+  vec3 mask1 = blurry_rectangle(p, 0.4, 0.125, 0.02, 0.02, 0.3 * sinSpeeding(u_time, 0.0), 0.0);
+  vec3 mask2 = blurry_rectangle(p, 0.4, 0.125, 0.02, 0.02, 0.3 * sinSpeeding(u_time, 2.0 * pi / 3.0), 0.0);
+  vec3 mask3 = blurry_rectangle(p, 0.4, 0.125, 0.02, 0.02, 0.3 * sinSpeeding(u_time, 4.0 * pi / 3.0), 0.0);
   
   // inside the blurry rectangle
   vec3 color1 = waves(p, 0.2, 0.2, 10.0, 10.0, 5.0, 5.0);
@@ -49,5 +56,5 @@ void main() {
   vec3 color3 = waves(p, 0.1, 0.1, 2.0, 5.0, 1.0, 5.0);
   
   float glowVal = glow(p);
-  gl_FragColor = vec4(mask1 * color1 + mask2 * color2 + mask3 * color3, 1.0) * vec4(0.5 * glowVal, 0.5 * glowVal, 1.0, 1.0);
+  gl_FragColor = vec4(mask1 * color1 + mask2 * color2 + mask3 * color3, 1.0) * vec4(0.8 * glowVal, 0.2 * glowVal, 1.0, 1.0);
 }
